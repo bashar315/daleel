@@ -64,20 +64,16 @@ h1, h2, h3, h4 {
 a { color: var(--c-primary); text-decoration: none; }
 a:hover { color: var(--c-primary-deep); }
 
-/* -------- (2) الشريط -------- */
-.c-navbar { padding: 1rem 0 0.4rem; }
-.c-navbar .inner {
+/* -------- (2) الشريط — مكوّن Bootstrap Navbar -------- */
+.navbar { padding: 1rem 0 0.4rem; }
+.navbar > .container {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: 18px;
   padding: 0.45rem 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
   box-shadow: var(--c-shadow);
 }
-.c-navbar .navbar-brand {
+.navbar .navbar-brand {
   color: var(--c-text);
   font-weight: 700;
   font-size: 1.05rem;
@@ -86,6 +82,27 @@ a:hover { color: var(--c-primary-deep); }
   gap: 0.6rem;
   padding: 0 0.35rem;
 }
+.navbar .nav-link {
+  color: var(--c-text);
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.navbar .nav-link:hover,
+.navbar .nav-link:focus-visible,
+.navbar .nav-link.active {
+  background: rgba(181, 69, 46, 0.12);
+  color: var(--c-primary);
+}
+.navbar-toggler {
+  border-color: var(--c-border);
+  padding: 0.35rem 0.55rem;
+}
+.navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(181, 69, 46, 0.25);
+}
+body.dark .navbar-toggler-icon { filter: invert(1); }
 .brand-logo {
   width: 42px;
   height: 42px;
@@ -94,31 +111,26 @@ a:hover { color: var(--c-primary-deep); }
   display: block;
   flex-shrink: 0;
 }
-.c-navbar .nav-link {
-  color: var(--c-text);
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.95rem;
-}
-.c-navbar .nav-link:hover,
-.c-navbar .nav-link.active {
-  background: rgba(181, 69, 46, 0.12);
-  color: var(--c-primary);
-}
 
-/* -------- (3) البطاقات -------- */
-.glass {
+/* -------- (3) البطاقات — مكوّن Bootstrap Card -------- */
+.card {
   background: var(--c-surface);
   border: 1px solid var(--c-border);
   border-radius: var(--c-radius);
   box-shadow: var(--c-shadow);
+  color: var(--c-text);
 }
-.glass-hover { transition: transform 0.2s ease, border-color 0.2s ease; }
-.glass-hover:hover {
+.card .card-title { color: var(--c-text); }
+.card .card-text { color: var(--c-muted); }
+.event-card { overflow: hidden; transition: transform 0.2s ease, border-color 0.2s ease; }
+.event-card:hover {
   transform: translateY(-3px);
   border-color: rgba(181, 69, 46, 0.45);
 }
+.event-card .card-img-top { aspect-ratio: 16/9; object-fit: cover; }
+.event-card .card-body { padding: 1rem 1.1rem 1.15rem; }
+.event-card .card-title { font-size: 1.05rem; margin: 0.45rem 0 0.3rem; }
+.event-card .excerpt { font-size: 0.92rem; margin: 0 0 0.9rem; }
 
 .c-hero { padding: 2.6rem 0 1.5rem; }
 .c-hero h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); margin-bottom: 0.6rem; }
@@ -135,12 +147,6 @@ a:hover { color: var(--c-primary-deep); }
   font-weight: 700;
   margin-bottom: 0.8rem;
 }
-
-.c-card { overflow: hidden; color: var(--c-text); }
-.c-card .card-img-top { aspect-ratio: 16/9; object-fit: cover; }
-.c-card .card-body { padding: 1rem 1.1rem 1.15rem; }
-.c-card h3 { font-size: 1.05rem; margin: 0.45rem 0 0.3rem; }
-.c-card p.excerpt { color: var(--c-muted); font-size: 0.92rem; margin: 0 0 0.9rem; }
 
 .badge-cat {
   display: inline-block;
@@ -171,25 +177,41 @@ body.dark .badge-family { color: #2A2118; }
   color: #2A2118;
 }
 
-/* -------- (4) الأزرار -------- */
-.btn-c-primary {
-  background: var(--c-primary);
-  color: #fff;
-  border: 0;
+/* -------- (4) الأزرار — مكوّنا Bootstrap btn-primary و btn-outline-secondary -------- */
+.btn-primary {
+  --bs-btn-bg: var(--c-primary);
+  --bs-btn-border-color: var(--c-primary);
+  --bs-btn-hover-bg: var(--c-primary-deep);
+  --bs-btn-hover-border-color: var(--c-primary-deep);
+  --bs-btn-active-bg: var(--c-primary-deep);
+  --bs-btn-active-border-color: var(--c-primary-deep);
+  --bs-btn-disabled-bg: var(--c-primary);
+  --bs-btn-disabled-border-color: var(--c-primary);
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-color: #fff;
+  --bs-btn-disabled-color: #fff;
   border-radius: 999px;
   padding: 0.5rem 1.15rem;
   font-weight: 700;
 }
-.btn-c-primary:hover { color: #fff; background: var(--c-primary-deep); }
-.btn-c-ghost {
-  background: transparent;
-  color: var(--c-text);
-  border: 1px solid var(--c-border);
+.btn-outline-secondary {
+  --bs-btn-color: var(--c-text);
+  --bs-btn-border-color: var(--c-border);
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-color: var(--c-primary);
+  --bs-btn-hover-border-color: var(--c-primary);
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-color: var(--c-primary);
+  --bs-btn-active-border-color: var(--c-primary);
+  --bs-btn-disabled-color: var(--c-muted);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--c-border);
+  --bs-btn-focus-shadow-rgb: 181, 69, 46;
   border-radius: 999px;
   padding: 0.45rem 1rem;
   font-weight: 600;
 }
-.btn-c-ghost:hover { color: var(--c-primary); border-color: var(--c-primary); }
 
 /* -------- (5) السلايدر -------- */
 .c-carousel { border-radius: var(--c-radius); overflow: hidden; border: 1px solid var(--c-border); }
@@ -243,18 +265,18 @@ body.dark .badge-family { color: #2A2118; }
   transform: translateY(-2px);
 }
 
-.team-card { text-align: center; padding: 1.4rem 1rem; height: 100%; }
-.team-card__avatar {
-  width: 76px;
-  height: 76px;
-  margin: 0 auto 0.8rem;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--c-accent);
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.25rem;
+.team-card { text-align: center; }
+.team-card .card-body { padding: 1.4rem 1rem; }
+.team-card__photo {
+  display: block;
+  width: 112px;
+  height: 112px;
+  object-fit: cover;
+  padding: 0;
+  margin: 0 auto 0.85rem;
+  border-width: 3px;
+  border-color: rgba(181, 69, 46, 0.28);
+  background: var(--c-bg);
 }
 .team-card__role { color: var(--c-primary); font-weight: 700; font-size: 0.9rem; margin-bottom: 0.2rem; }
 .team-card__id {
@@ -329,6 +351,7 @@ body.dark .btn-close { filter: invert(1) grayscale(1); }
 }
 @media (min-width: 992px) {
   .c-footer__grid { grid-template-columns: 1.2fr 1.4fr; gap: 2.5rem; }
+  .navbar-expand-lg .navbar-collapse { flex-grow: 1; }
 }
 .c-footer__panel-head { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.7rem; }
 .c-footer__logo-dot {
@@ -409,6 +432,7 @@ body.dark .btn-close { filter: invert(1) grayscale(1); }
   width: 46px;
   height: 46px;
   border-radius: 50%;
+  padding: 0;
   background: var(--c-primary);
   color: #fff;
   border: 0;
@@ -438,4 +462,10 @@ body.dark .btn-close { filter: invert(1) grayscale(1); }
 @media (max-width: 576px) {
   .c-hero { padding: 1.6rem 0 1rem; }
   .c-footer__columns { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .event-card { transition: none; }
+  .event-card:hover { transform: none; }
 }

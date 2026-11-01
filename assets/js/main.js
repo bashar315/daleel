@@ -1,11 +1,13 @@
 /* ================================================================
    دليل الفعاليات — main.js
-   سلايدر، فلترة، تقويم، مشاركة، تحقق النموذج، وحجز وهمي خفيف.
+   سلايدر، فلترة، تقويم، مشاركة، تحقق النموذج، وحجز مكان.
    ================================================================ */
 
 const STORE = {
   theme: "daleel:theme",
   lastFilter: "daleel:lastFilter",
+  category: "daleel:category",
+  bookings: "daleel:bookings",
 };
 
 /* التصنيفات المطلوبة في الوظيفة: ثقافة، رياضة، موسيقى، عائلي */
@@ -76,22 +78,36 @@ function todayISO() {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 function getParam(k) { return new URLSearchParams(location.search).get(k); }
+
+function saveCategoryPreference(category) {
+  localStorage.setItem(STORE.category, category || "");
+}
+
+function loadCategoryPreference() {
+  const dedicated = localStorage.getItem(STORE.category);
+  if (dedicated !== null) return dedicated;
+  try {
+    return JSON.parse(localStorage.getItem(STORE.lastFilter) || "{}").cat || "";
+  } catch (_) {
+    return "";
+  }
+}
 function cardHTML(ev) {
   const today = ev.date === todayISO() ? `<span class="badge-today">اليوم</span>` : "";
   return `
-    <article class="glass glass-hover c-card h-100">
+    <article class="card event-card h-100">
       <img src="${ev.image}" alt="${ev.title}" class="card-img-top" loading="lazy">
-      <div class="card-body">
+      <div class="card-body d-flex flex-column">
         <div class="d-flex justify-content-between align-items-center">
           <span><span class="badge-cat badge-${ev.category}">${CATEGORY_LABELS[ev.category] || ev.category}</span>${today}</span>
-          <small style="color:var(--c-muted);">${fmtDate(ev.date)}</small>
+          <small class="card-text">${fmtDate(ev.date)}</small>
         </div>
-        <h3>${ev.title}</h3>
-        <p class="small mb-2" style="color:var(--c-muted);"><i class="bi bi-geo-alt"></i> ${ev.location}</p>
-        <p class="excerpt">${ev.excerpt}</p>
-        <div class="d-flex gap-2">
-          <a href="event.html?id=${ev.id}" class="btn-c-primary text-decoration-none">التفاصيل</a>
-          <button class="btn-c-ghost" data-bs-toggle="modal" data-bs-target="#bookModal" data-event-id="${ev.id}">حجز</button>
+        <h3 class="card-title">${ev.title}</h3>
+        <p class="card-text small mb-2"><i class="bi bi-geo-alt"></i> ${ev.location}</p>
+        <p class="card-text excerpt">${ev.excerpt}</p>
+        <div class="d-flex gap-2 mt-auto">
+          <a href="event.html?id=${ev.id}" class="btn btn-primary">التفاصيل</a>
+          <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bookModal" data-event-id="${ev.id}">حجز مكان</button>
         </div>
       </div>
     </article>
@@ -186,11 +202,13 @@ function setupEventsPage() {
     });
   }
 
-  // أولوية: معامل URL ثم تفضيلات localStorage
+  // أولوية التصنيف: رابط الصفحة، ثم التفضيل المحفوظ في localStorage
   const urlCat = getParam("cat");
-  const saved = JSON.parse(localStorage.getItem(STORE.lastFilter) || "{}");
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(STORE.lastFilter) || "{}"); } catch (_) { saved = {}; }
   if (q && saved.q) q.value = saved.q;
-  if (cat) cat.value = urlCat || saved.cat || "";
+  if (cat) cat.value = urlCat || loadCategoryPreference();
+  if (urlCat) saveCategoryPreference(urlCat);
   if (dateF && saved.date) dateF.value = saved.date;
   if (locF && saved.loc) locF.value = saved.loc;
 
@@ -207,6 +225,7 @@ function setupEventsPage() {
     );
     grid.innerHTML = filtered.map(e => `<div class="col-md-6 col-lg-4">${cardHTML(e)}</div>`).join("");
     if (emptyMsg) emptyMsg.classList.toggle("d-none", filtered.length > 0);
+    saveCategoryPreference(cv);
     localStorage.setItem(STORE.lastFilter, JSON.stringify({ q: qv, cat: cv, date: dv, loc: lv }));
     const count = document.getElementById("resultsCount");
     if (count) count.textContent = filtered.length;
@@ -234,14 +253,18 @@ function setupEventDetailsPage() {
           <strong style="color:var(--c-text);">المكان:</strong> ${ev.location}
         </p>
         <img src="${ev.image}" alt="${ev.title}" class="img-fluid mt-3" style="border-radius:18px; aspect-ratio:16/8; object-fit:cover; width:100%; border:1px solid var(--c-border);">
-        <div class="glass p-4 mt-4">
-          <h2 class="h5">نظرة عامة</h2>
-          <p class="mb-0">${ev.description}</p>
+        <div class="card mt-4">
+          <div class="card-body">
+            <h2 class="card-title h5">نظرة عامة</h2>
+            <p class="card-text mb-0">${ev.description}</p>
+          </div>
         </div>
         ${ev.speakers?.length ? `
-        <div class="glass p-4 mt-3">
-          <h2 class="h6">المتحدثون</h2>
-          <ul class="mb-0">${ev.speakers.map(s => `<li>${s}</li>`).join("")}</ul>
+        <div class="card mt-3">
+          <div class="card-body">
+            <h2 class="card-title h6">المتحدثون</h2>
+            <ul class="mb-0">${ev.speakers.map(s => `<li>${s}</li>`).join("")}</ul>
+          </div>
         </div>` : ""}
         <h2 class="h6 mt-4">معرض الصور</h2>
         <div class="row g-3 event-gallery">
@@ -251,15 +274,17 @@ function setupEventDetailsPage() {
         </div>
       </div>
       <aside class="col-lg-5">
-        <div class="glass p-4">
-          <h2 class="h6">الموقع</h2>
-          <p class="small mb-3" style="color:var(--c-muted); line-height:1.7;">${ev.location}</p>
+        <div class="card">
+          <div class="card-body">
+          <h2 class="card-title h6">الموقع</h2>
+          <p class="card-text small mb-3">${ev.location}</p>
           <!-- خريطة ثابتة بصورة كما في الوظيفة -->
           <img src="assets/img/campus-map-guide.jpg" alt="خريطة موقع ${ev.location}" class="event-map mb-3" width="800" height="420">
           <div class="d-grid gap-2">
-            <button class="btn-c-primary" data-bs-toggle="modal" data-bs-target="#bookModal" data-event-id="${ev.id}">حجز مقعد</button>
-            <button type="button" class="btn-c-ghost" id="addToCalendarBtn"><i class="bi bi-calendar-plus"></i> أضف للتقويم</button>
-            <button type="button" class="btn-c-ghost" id="shareEventBtn"><i class="bi bi-share"></i> شارك</button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#bookModal" data-event-id="${ev.id}">حجز مكان</button>
+            <button type="button" class="btn btn-outline-secondary" id="addToCalendarBtn"><i class="bi bi-calendar-plus"></i> أضف للتقويم</button>
+            <button type="button" class="btn btn-outline-secondary" id="shareEventBtn"><i class="bi bi-share"></i> شارك</button>
+          </div>
           </div>
         </div>
       </aside>
@@ -279,7 +304,7 @@ function setupEventDetailsPage() {
     relatedHost.innerHTML = `
       <div class="section-head">
         <h2>فعاليات ذات صلة</h2>
-        <a href="events.html?cat=${ev.category}" class="btn-c-ghost text-decoration-none">المزيد</a>
+        <a href="events.html?cat=${ev.category}" class="btn btn-outline-secondary">المزيد</a>
       </div>
       <div class="row g-4">
         ${fallback.map(e => `<div class="col-md-6 col-lg-4">${cardHTML(e)}</div>`).join("")}
@@ -324,42 +349,125 @@ function setupContactForm() {
   });
 }
 
-/* -------- Modal الحجز بـ Stepper -------- */
+/* -------- Modal حجز مكان -------- */
 function setupBookModal() {
   const modal = document.getElementById("bookModal");
   if (!modal) return;
   const title = modal.querySelector(".modal-title");
   const steps = modal.querySelectorAll(".step");
   const panes = modal.querySelectorAll("[data-pane]");
+  const form = modal.querySelector("#bookForm");
+  const alertBox = modal.querySelector("#bookAlert");
 
   function goTo(i) {
-    steps.forEach((s, idx) => s.classList.toggle("active", idx <= i));
+    steps.forEach((s, idx) => s.classList.toggle("active", idx === i));
     panes.forEach((p, idx) => p.classList.toggle("d-none", idx !== i));
-    modal.querySelector("#bookNext").classList.toggle("d-none", i === panes.length - 1);
-    modal.querySelector("#bookConfirm").classList.toggle("d-none", i !== panes.length - 1);
-    modal.querySelector("#bookBack").disabled = (i === 0);
-    modal.dataset.step = i;
+    modal.querySelector("#bookBack").classList.toggle("d-none", i === panes.length - 1);
+    modal.querySelector("#bookBack").disabled = i === 0;
+    modal.querySelector("#bookNext").classList.toggle("d-none", i !== 0);
+    modal.querySelector("#bookConfirm").classList.toggle("d-none", i !== 1);
+    modal.querySelector("#bookClose").classList.toggle("d-none", i !== 2);
+    modal.dataset.step = String(i);
+  }
+
+  function readBooking() {
+    return {
+      name: modal.querySelector("#bookName").value.trim(),
+      email: modal.querySelector("#bookEmail").value.trim(),
+      seats: Number(modal.querySelector("#bookSeats").value),
+    };
+  }
+
+  function bookingErrors(data) {
+    const errors = [];
+    if (data.name.length < 3) errors.push("الاسم مطلوب (3 أحرف على الأقل).");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) errors.push("صيغة البريد غير صحيحة.");
+    if (!Number.isInteger(data.seats) || data.seats < 1 || data.seats > 5) errors.push("عدد الأماكن من 1 إلى 5.");
+    return errors;
+  }
+
+  function showBookingAlert(errors) {
+    if (!alertBox) return;
+    if (!errors.length) {
+      alertBox.classList.add("d-none");
+      alertBox.textContent = "";
+      return;
+    }
+    alertBox.textContent = errors.join(" ");
+    alertBox.classList.remove("d-none");
+  }
+
+  function paintSummary(data) {
+    const box = modal.querySelector("#bookSummary");
+    if (!box) return;
+    const rows = [
+      ["الفعالية", modal.dataset.eventTitle || "الفعالية"],
+      ["الاسم", data.name],
+      ["البريد", data.email],
+      ["عدد الأماكن", String(data.seats)],
+    ];
+    box.replaceChildren();
+    rows.forEach(([label, value]) => {
+      const line = document.createElement("p");
+      line.className = "mb-1";
+      const strong = document.createElement("strong");
+      strong.textContent = `${label}: `;
+      line.append(strong, document.createTextNode(value));
+      box.append(line);
+    });
+  }
+
+  function reviewBooking() {
+    const data = readBooking();
+    const errors = bookingErrors(data);
+    showBookingAlert(errors);
+    if (errors.length) return;
+    paintSummary(data);
+    goTo(1);
+  }
+
+  function confirmBooking() {
+    const data = readBooking();
+    if (bookingErrors(data).length) {
+      goTo(0);
+      showBookingAlert(bookingErrors(data));
+      return;
+    }
+    let list = [];
+    try { list = JSON.parse(localStorage.getItem(STORE.bookings) || "[]"); } catch (_) { list = []; }
+    if (!Array.isArray(list)) list = [];
+    list.push({
+      eventId: modal.dataset.eventId || "",
+      title: modal.dataset.eventTitle || "",
+      name: data.name,
+      email: data.email,
+      seats: data.seats,
+      at: new Date().toISOString(),
+    });
+    localStorage.setItem(STORE.bookings, JSON.stringify(list));
+    goTo(2);
   }
 
   modal.addEventListener("show.bs.modal", (ev) => {
-    const btn = ev.relatedTarget;
-    const id = btn?.getAttribute("data-event-id");
+    const id = ev.relatedTarget?.getAttribute("data-event-id");
     const found = EVENTS.find(e => String(e.id) === String(id));
-    if (found && title) title.textContent = `حجز: ${found.title}`;
+    modal.dataset.eventId = found ? String(found.id) : "";
+    modal.dataset.eventTitle = found?.title || "الفعالية";
+    if (title) title.textContent = `حجز مكان: ${modal.dataset.eventTitle}`;
+    form?.reset();
+    showBookingAlert([]);
     goTo(0);
   });
 
-  modal.querySelector("#bookNext")?.addEventListener("click", () => {
-    const i = parseInt(modal.dataset.step || "0", 10);
-    goTo(Math.min(i + 1, panes.length - 1));
-  });
+  modal.querySelector("#bookNext")?.addEventListener("click", reviewBooking);
   modal.querySelector("#bookBack")?.addEventListener("click", () => {
-    const i = parseInt(modal.dataset.step || "0", 10);
-    goTo(Math.max(i - 1, 0));
+    goTo(Math.max(parseInt(modal.dataset.step || "0", 10) - 1, 0));
   });
-  modal.querySelector("#bookConfirm")?.addEventListener("click", () => {
-    showToast("تم تأكيد الحجز بنجاح", "success");
-    bootstrap.Modal.getInstance(modal)?.hide();
+  modal.querySelector("#bookConfirm")?.addEventListener("click", confirmBooking);
+  form?.addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (modal.dataset.step === "1") confirmBooking();
+    else reviewBooking();
   });
 }
 
@@ -376,17 +484,21 @@ function updateThemeToggleLabel(toggle) {
   if (!toggle) return;
   const isDark = document.body.classList.contains("dark");
   toggle.textContent = isDark ? "الوضع الفاتح" : "الوضع الداكن";
+  toggle.setAttribute("aria-pressed", isDark ? "true" : "false");
   toggle.setAttribute("title", isDark ? "التبديل إلى الوضع الفاتح" : "التبديل إلى الوضع الداكن");
 }
 
 function setupThemeToggle() {
-  const toggle = document.getElementById("themeToggle");
+  const toggles = document.querySelectorAll("[data-theme-toggle]");
   if (localStorage.getItem(STORE.theme) === "dark") document.body.classList.add("dark");
-  updateThemeToggleLabel(toggle);
-  toggle?.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem(STORE.theme, document.body.classList.contains("dark") ? "dark" : "light");
-    updateThemeToggleLabel(toggle);
+  const sync = () => toggles.forEach(updateThemeToggleLabel);
+  sync();
+  toggles.forEach((toggle) => {
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      localStorage.setItem(STORE.theme, document.body.classList.contains("dark") ? "dark" : "light");
+      sync();
+    });
   });
 }
 
@@ -416,17 +528,31 @@ function showToast(message, type = "success", duration = 2800) {
   el.addEventListener("hidden.bs.toast", () => el.remove());
 }
 
+/* روابط التصنيف تحفظ التفضيل قبل الانتقال لصفحة الفعاليات */
+function setupCategoryLinks() {
+  document.querySelectorAll('a[href*="cat="]').forEach((link) => {
+    link.addEventListener("click", () => {
+      const cat = new URL(link.href, location.href).searchParams.get("cat");
+      if (cat) saveCategoryPreference(cat);
+    });
+  });
+}
+
 /* -------- Active Nav -------- */
 function highlightActiveNav() {
   const path = location.pathname.split("/").pop() || "index.html";
-  document.querySelectorAll(".c-navbar .nav-link").forEach(a => {
-    if (a.getAttribute("href") === path) a.classList.add("active");
+  document.querySelectorAll(".navbar .nav-link").forEach(a => {
+    const on = a.getAttribute("href") === path;
+    a.classList.toggle("active", on);
+    if (on) a.setAttribute("aria-current", "page");
+    else a.removeAttribute("aria-current");
   });
 }
 
 /* -------- init -------- */
 document.addEventListener("DOMContentLoaded", () => {
   highlightActiveNav();
+  setupCategoryLinks();
   setupThemeToggle();
   setupScrollTop();
   setupBookModal();
