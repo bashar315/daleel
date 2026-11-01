@@ -426,21 +426,18 @@ body.dark .btn-close { filter: invert(1) grayscale(1); }
 
 /* -------- (11) زر العودة للأعلى -------- */
 #scrollTopBtn {
+  --bs-btn-border-radius: 50%;
   position: fixed;
   left: 1.15rem;
   bottom: 1.15rem;
   width: 46px;
   height: 46px;
-  border-radius: 50%;
   padding: 0;
-  background: var(--c-primary);
-  color: #fff;
-  border: 0;
+  border-radius: 50%;
   display: none;
   place-items: center;
-  cursor: pointer;
+  line-height: 1;
   z-index: 1040;
-  font-weight: 700;
 }
 #scrollTopBtn.show { display: grid; }
 
